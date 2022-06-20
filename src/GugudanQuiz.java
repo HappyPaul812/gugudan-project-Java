@@ -14,6 +14,19 @@ import java.awt.Font;
 import java.awt.EventQueue;
 
 import java.util.Random;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import java.net.URL;
+import java.net.URLEncoder;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+
+import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+//import java.io.OutputStream;
 
 public class GugudanQuiz {
 	private JFrame frame;
@@ -33,6 +46,7 @@ public class GugudanQuiz {
 	private JLabel lblQuestion;
 	private JLabel lblAnswerCounter;
 	private JTextField userAnswer;
+	private JTextField name;
 	
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
@@ -94,7 +108,7 @@ public class GugudanQuiz {
 		lblQuestion = new JLabel("? X ? = ");
 		lblQuestion.setFont(new Font("굴림", Font.PLAIN, 16));
 		lblQuestion.setHorizontalAlignment(SwingConstants.CENTER);
-		lblQuestion.setBounds(131, 87, 57, 15);
+		lblQuestion.setBounds(152, 137, 57, 15);
 		panel.add(lblQuestion);
 		
 		Action action = new AbstractAction() {
@@ -107,7 +121,7 @@ public class GugudanQuiz {
 		
 		userAnswer = new JTextField();
 		userAnswer.addActionListener( action );
-		userAnswer.setBounds(197, 85, 65, 21);
+		userAnswer.setBounds(218, 135, 65, 21);
 		panel.add(userAnswer);
 		userAnswer.setColumns(10);
 		
@@ -116,6 +130,16 @@ public class GugudanQuiz {
 		lblAnswerCounter.setHorizontalAlignment(SwingConstants.LEFT);
 		lblAnswerCounter.setBounds(26, 39, 128, 24);
 		panel.add(lblAnswerCounter);
+		
+		JLabel lblName = new JLabel("이름 :");
+		lblName.setFont(new Font("굴림", Font.PLAIN, 16));
+		lblName.setBounds(152, 85, 57, 15);
+		panel.add(lblName);
+		
+		name = new JTextField();
+		name.setBounds(203, 83, 81, 21);
+		panel.add(name);
+		name.setColumns(10);
 	}
 	
 	public void timer() {
@@ -135,6 +159,7 @@ public class GugudanQuiz {
 						}
 					}
 				}
+				saveDB();
 				timeOver = true;
 				playStop = true;
 				timer.setText("시간 초과!!!");
@@ -142,6 +167,80 @@ public class GugudanQuiz {
 			
 		});
 		//time.stop();
+	}
+	
+	public void saveDB() {
+		
+
+		
+		final String sURL = "https://paul81web.000webhostapp.com/php/gugudan_insert.php";
+		
+		HashMap<String, String> param = new HashMap<String, String>();
+		param.put("name", name.getText());
+		param.put("score", Integer.toString(answerCounter));
+		//StringBuilder postData = new StringBuilder();
+		//Map<String, String> resultMap = new HashMap<String, String>();
+		BufferedReader in = null;
+		
+		try {
+			URL url = new URL(sURL);
+			
+			StringBuilder postData = new StringBuilder();
+			for(Map.Entry<String, String> params: param.entrySet()) {
+				if(postData.length() != 0) postData.append("&");
+				postData.append(URLEncoder.encode(params.getKey(), "UTF-8"));
+				postData.append("=");
+				postData.append(URLEncoder.encode(String.valueOf(params.getValue()), "UTF-8"));
+					
+			}
+			byte[] postDataBytes = postData.toString().getBytes("UTF-8");
+			
+			HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+	
+			conn.setRequestMethod("POST");
+	        
+	        //받는 API에 따라 맞는 content-Type을 정해주면된다.
+		    conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+	        
+	        // content-length로 보내는 데이터의 길이
+		    conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
+			
+	        // 서버에서 온 데이터를 출력할 수 있는 상태인지
+		    conn.setDoOutput(true);
+	        
+	        // POST 호출
+		    conn.getOutputStream().write(postDataBytes);
+		 
+		    in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+		 
+		    String inputLine;
+		    StringBuffer response = new StringBuffer();
+		    while((inputLine = in.readLine()) != null) { // response 출력
+		    	response.append(inputLine);
+		    }
+
+			/*String jsonStr = response.toString();
+			JSONParser parser = new JSONParser();			
+			resultMap = (Map<String, Object>)parser.parse(jsonStr);*/
+			
+			
+		} catch(MalformedURLException e) {
+			JOptionPane.showMessageDialog(null, "인터넷 주소가 맞지 않습니다 ", "URL 틀림", JOptionPane.WARNING_MESSAGE);
+			e.printStackTrace();
+		} catch(IOException e) {
+			JOptionPane.showMessageDialog(null, "인터넷 주소에 연결할 수 없습니다.", "연결 불가.", JOptionPane.WARNING_MESSAGE);
+			e.printStackTrace();
+		} finally { 
+		//http 요청 및 응답 완료 후 BufferedReader를 닫아줍니다
+		try {
+			if (in != null) {
+				in.close();	
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+		
 	}
 	
 	public int question() {
