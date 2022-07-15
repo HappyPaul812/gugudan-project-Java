@@ -26,7 +26,9 @@ import java.net.MalformedURLException;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.awt.Color;
 //import java.io.OutputStream;
+
 
 public class GugudanQuiz {
 	private JFrame frame;
@@ -47,6 +49,8 @@ public class GugudanQuiz {
 	private JLabel lblAnswerCounter;
 	private JTextField userAnswer;
 	private JTextField name;
+	
+	private JLabel lblRankView;
 	
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
@@ -84,31 +88,37 @@ public class GugudanQuiz {
 		frame.getContentPane().add(panel);
 		panel.setLayout(null);
 		
+		JPanel rankPanel = new JPanel();
+		rankPanel.setBounds(0, 0, 434, 261);
+		frame.getContentPane().add(rankPanel);
+		rankPanel.setLayout(null);
+		rankPanel.setVisible(false);
+		
 		JLabel title = new JLabel("\uAD6C\uAD6C\uB2E8 \uD034\uC988");
 		title.setBounds(165, 10, 110, 24);
 		title.setFont(new Font("굴림", Font.BOLD, 20));
 		panel.add(title);
 		
 		timer = new JLabel("\uD0C0\uC774\uBA38");
+		timer.setBounds(152, 39, 142, 15);
 		timer.setHorizontalAlignment(SwingConstants.CENTER);
 		timer.setFont(new Font("굴림", Font.PLAIN, 16));
-		timer.setBounds(152, 39, 142, 15);
 		panel.add(timer);
 		
 		//시작 버튼
 		btnNewButton = new JButton("\uC2DC   \uC791");
+		btnNewButton.setBounds(165, 197, 97, 23);
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				control();
 			}
 		});
-		btnNewButton.setBounds(165, 197, 97, 23);
 		panel.add(btnNewButton);
 		
 		lblQuestion = new JLabel("? X ? = ");
+		lblQuestion.setBounds(152, 137, 57, 15);
 		lblQuestion.setFont(new Font("굴림", Font.PLAIN, 16));
 		lblQuestion.setHorizontalAlignment(SwingConstants.CENTER);
-		lblQuestion.setBounds(152, 137, 57, 15);
 		panel.add(lblQuestion);
 		
 		Action action = new AbstractAction() {
@@ -120,26 +130,61 @@ public class GugudanQuiz {
 		};
 		
 		userAnswer = new JTextField();
-		userAnswer.addActionListener( action );
 		userAnswer.setBounds(218, 135, 65, 21);
+		userAnswer.addActionListener( action );
 		panel.add(userAnswer);
 		userAnswer.setColumns(10);
 		
 		lblAnswerCounter = new JLabel("\uB9DE\uD78C \uAC1C\uC218 : ");
+		lblAnswerCounter.setBounds(26, 39, 128, 24);
 		lblAnswerCounter.setFont(new Font("굴림", Font.PLAIN, 16));
 		lblAnswerCounter.setHorizontalAlignment(SwingConstants.LEFT);
-		lblAnswerCounter.setBounds(26, 39, 128, 24);
 		panel.add(lblAnswerCounter);
 		
 		JLabel lblName = new JLabel("이름 :");
-		lblName.setFont(new Font("굴림", Font.PLAIN, 16));
 		lblName.setBounds(152, 85, 57, 15);
+		lblName.setFont(new Font("굴림", Font.PLAIN, 16));
 		panel.add(lblName);
 		
 		name = new JTextField();
 		name.setBounds(203, 83, 81, 21);
 		panel.add(name);
 		name.setColumns(10);
+		
+		JButton btnRank = new JButton("순위 보기");
+		btnRank.setBounds(165, 228, 97, 23);
+		btnRank.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				panel.setVisible(false);
+				rankViewer();
+				rankPanel.setVisible(true);
+			}
+		});
+		
+		panel.add(btnRank);
+		
+		
+		
+//-----------------------------------------------------------------------------------------------------------------------
+		JButton btnRankClose = new JButton("순위 닫기");
+		btnRankClose.setBounds(165, 228, 97, 23);
+		btnRankClose.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				panel.setVisible(true);
+				rankPanel.setVisible(false);
+			}
+		});
+		
+		lblRankView = new JLabel("순위");
+		lblRankView.setHorizontalAlignment(SwingConstants.CENTER);
+		lblRankView.setBounds(12, 10, 410, 208);
+		rankPanel.add(lblRankView);
+		lblRankView.setBackground(Color.WHITE);
+		lblRankView.setFont(new Font("굴림", Font.PLAIN, 16));
+		
+		
+		
+		rankPanel.add(btnRankClose);
 	}
 	
 	public void timer() {
@@ -169,10 +214,8 @@ public class GugudanQuiz {
 		//time.stop();
 	}
 	
+	
 	public void saveDB() {
-		
-
-		
 		final String sURL = "https://paul81web.000webhostapp.com/php/gugudan_insert.php";
 		
 		HashMap<String, String> param = new HashMap<String, String>();
@@ -241,6 +284,42 @@ public class GugudanQuiz {
 		}
 	}
 		
+	}
+	
+	public void rankViewer() {
+		URL url = null;
+		BufferedReader input = null;
+		//특정 위치의 html파일을 읽어오기
+		String address = "https://paul81web.000webhostapp.com/php/gugudan_score_viewer.php";
+		String line = "";
+		String rankHtml ="";
+		
+		try {
+			url = new URL(address);
+			input = new BufferedReader(new InputStreamReader(url.openStream()));
+		    
+			while((line=input.readLine()) != null) {
+				//System.out.println(line);
+				rankHtml += line;
+			}
+			
+			lblRankView.setText("<html>" + rankHtml + "</html>");
+			//input.close();
+		} catch(MalformedURLException e) {
+			JOptionPane.showMessageDialog(null, "인터넷 주소가 맞지 않습니다 ", "URL 틀림", JOptionPane.WARNING_MESSAGE);
+			e.printStackTrace();
+		} catch(IOException e) {
+			JOptionPane.showMessageDialog(null, "인터넷 주소에 연결할 수 없습니다.", "연결 불가.", JOptionPane.WARNING_MESSAGE);
+			e.printStackTrace();
+		} finally { 
+			try {
+				if (input != null) {
+					input.close();	
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	public int question() {
